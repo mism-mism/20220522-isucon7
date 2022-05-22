@@ -14,6 +14,6 @@ jobs:
           config: ${{ secrets.CONFIG }} 
           if_key_exists: fail
       - name: git pull
-        run: isucon "cd 20220522-isucon7 && git pull"
+        run: ssh isucon "cd 20220522-isucon7 && git pull"
       - name: make gogo
-        run: isucon "cd 20220522-isucon7 && make gogo"
+        run: ssh isucon "cd 20220522-isucon7 && make gogo"
