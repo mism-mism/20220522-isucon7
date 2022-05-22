@@ -1,4 +1,4 @@
-on: push
+sucon7on: push
 name: run ssh
 jobs:
   run-ssh:
@@ -14,4 +14,6 @@ jobs:
           config: ${{ secrets.CONFIG }} 
           if_key_exists: fail
       - name: run
-        run: ssh isucon "echo 'hogehoge'"
+        run: 
+          - ssh isucon "cd 20220522-isucon7 && git pull"
+          - ssh isucon "cd 20220522-isucon7 && make gogo"
