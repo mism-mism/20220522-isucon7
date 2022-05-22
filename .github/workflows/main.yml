@@ -10,10 +10,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
           name: id_rsa
-          config: |
-            Host server
-              HostName ${{ secrets.HOST_NAME }}
-              User ${{ secrets.USER_NAME }}
-              IdentityFile ~/.ssh/id_rsa
+          config: ${{ secrets.CONFIG }} 
       - name: run
-        run: ssh server "echo 'hogehoge'"
+        run: ssh isucon "echo 'hogehoge'"
