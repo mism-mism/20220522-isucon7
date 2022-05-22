@@ -11,5 +11,6 @@ jobs:
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
           name: id_rsa
           config: ${{ secrets.CONFIG }} 
+          if_key_exists: fail
       - name: run
         run: ssh isucon "echo 'hogehoge'"
