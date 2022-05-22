@@ -629,7 +629,7 @@ func postProfile(c echo.Context) error {
 
 	avatarName := ""
 	var avatarData []byte
-
+	editName := c.FormValue("display_name")
 	if fh, err := c.FormFile("avatar_icon"); err == http.ErrMissingFile {
 		// no file upload
 	} else if err != nil {
@@ -661,52 +661,82 @@ func postProfile(c echo.Context) error {
 		avatarName = fmt.Sprintf("%x%s", sha1.Sum(avatarData), ext)
 	}
 
+	updateAvatarIcon := ""
+
 	if avatarName != "" && len(avatarData) > 0 {
-		_, err := db.Exec("INSERT INTO image (name, data) VALUES (?, ?)", avatarName, avatarData)
-		if err != nil {
-			return err
+		// 画像をローカルに保存(テンポラリファイルから保存先にリネーム)
+		path := `/home/isucon/20220522-isucon7/webapp/public/icons/` + avatarName
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			// ファイルがないときだけ書く
+			err := ioutil.WriteFile(path, avatarData, 0644)
+			if err != nil {
+				return err
+			}
 		}
-		_, err = db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?", avatarName, self.ID)
-		if err != nil {
-			return err
-		}
+
+		updateAvatarIcon = avatarName
 	}
 
-	if name := c.FormValue("display_name"); name != "" {
-		_, err := db.Exec("UPDATE user SET display_name = ? WHERE id = ?", name, self.ID)
-		if err != nil {
-			return err
+	err = nil
+	if updateAvatarIcon != "" {
+		if editName != "" {
+			_, err = db.Exec("UPDATE user SET avatar_icon = ?, display_name = ? WHERE id = ?",
+				updateAvatarIcon, editName, self.ID)
+
+			self.AvatarIcon = updateAvatarIcon
+			self.DisplayName = editName
+		} else {
+			_, err = db.Exec("UPDATE user SET avatar_icon = ? WHERE id = ?",
+				updateAvatarIcon, self.ID)
+
+			self.AvatarIcon = updateAvatarIcon
 		}
-	}
 
-	return c.Redirect(http.StatusSeeOther, "/")
-}
+	} else if editName != "" {
+		_, err = db.Exec("UPDATE user SET display_name = ? WHERE id = ?",
+			editName, self.ID)
 
-func getIcon(c echo.Context) error {
-	var name string
-	var data []byte
-	err := db.QueryRow("SELECT name, data FROM image WHERE name = ?",
-		c.Param("file_name")).Scan(&name, &data)
-	if err == sql.ErrNoRows {
-		return echo.ErrNotFound
+		self.DisplayName = editName
 	}
 	if err != nil {
 		return err
 	}
 
-	mime := ""
-	switch true {
-	case strings.HasSuffix(name, ".jpg"), strings.HasSuffix(name, ".jpeg"):
-		mime = "image/jpeg"
-	case strings.HasSuffix(name, ".png"):
-		mime = "image/png"
-	case strings.HasSuffix(name, ".gif"):
-		mime = "image/gif"
-	default:
-		return echo.ErrNotFound
-	}
-	return c.Blob(http.StatusOK, mime, data)
+
+	return c.Redirect(http.StatusSeeOther, "/")
 }
+
+func getIcon(c echo.Context) error {
+	fileName := c.Param("file_name")
+	path := `/home/isucon/20220522-isucon7/webapp/public/icons/` + fileName
+	if _, err := os.Stat(path); os.IsExist(err) {
+		return c.File(path)
+	}
+	var name string
+        var data []byte
+        err := db.QueryRow("SELECT name, data FROM image WHERE name = ?",
+                c.Param("file_name")).Scan(&name, &data)
+        if err == sql.ErrNoRows {
+                return echo.ErrNotFound
+        }
+        if err != nil {
+                return err
+        }
+
+        mime := ""
+        switch true {
+        case strings.HasSuffix(name, ".jpg"), strings.HasSuffix(name, ".jpeg"):
+                mime = "image/jpeg"
+        case strings.HasSuffix(name, ".png"):
+                mime = "image/png"
+        case strings.HasSuffix(name, ".gif"):
+                mime = "image/gif"
+        default:
+                return echo.ErrNotFound
+        }
+        return c.Blob(http.StatusOK, mime, data)
+}
+
 
 func tAdd(a, b int64) int64 {
 	return a + b
