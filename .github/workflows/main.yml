@@ -3,6 +3,7 @@ name: run ssh
 jobs:
   run-ssh:
     runs-on: ubuntu-latest
+    environment: prod
     steps:
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
