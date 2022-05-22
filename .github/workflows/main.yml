@@ -16,4 +16,4 @@ jobs:
       - name: git pull
         run: ssh isucon "cd 20220522-isucon7 && git pull"
       - name: make gogo
-        run: ssh isucon "cd 20220522-isucon7 && make gogo"
+        run: ssh isucon "export PATH=/home/isucon/local/go/bin:$PATH && cd 20220522-isucon7 && make gogo"
